@@ -12,8 +12,6 @@ The script configures the required Windows and IIS resources, including:
 * Application Pool identity using a specific Windows account;
 * IIS website;
 * HTTP binding;
-* HTTPS binding;
-* Self-signed SSL certificate when a certificate thumbprint is not provided;
 * IIS log directory;
 * IIS application (sub-application);
 * Application Pool association.
@@ -55,18 +53,12 @@ The IIS service must be running before the website and application configuration
 
 ---
 
-## 4. Script Location
+## 4. Script
 
 The provisioning script is:
 
 ```text
 iis.ps1
-```
-
-Example local path:
-
-```text
-C:\Users\Cicero\Documents\Cicero\iis.ps1
 ```
 
 The script accepts the configuration through command-line parameters, allowing the same script to be reused in different environments.
@@ -75,23 +67,19 @@ The script accepts the configuration through command-line parameters, allowing t
 
 ## 5. Parameters
 
-The main parameters are:
-
-| Parameter               | Description                                  |
-| ----------------------- | -------------------------------------------- |
-| `SiteName`              | IIS website name                             |
-| `SitePhysicalPath`      | Physical path of the website                 |
-| `Port`                  | HTTP port                                    |
-| `HttpsPort`             | HTTPS port                                   |
-| `HostHeader`            | DNS/host name used by the website            |
-| `CertificateThumbprint` | Existing SSL certificate thumbprint          |
-| `GroupName`             | Local Windows security group                 |
-| `UserName`              | Windows account used by the Application Pool |
-| `UserPassword`          | Password of the Windows account              |
-| `AppPoolName`           | IIS Application Pool name                    |
-| `LogFilePath`           | IIS log directory                            |
-| `AppName`               | IIS sub-application name                     |
-| `AppPhysicalPath`       | Physical path of the sub-application         |
+| Parameter          | Description                                  |
+| ------------------ | -------------------------------------------- |
+| `SiteName`         | IIS website name                             |
+| `SitePhysicalPath` | Physical path of the website                 |
+| `Port`             | HTTP port                                    |
+| `HostHeader`       | Host name used by the website                |
+| `GroupName`        | Local Windows security group                 |
+| `UserName`         | Windows account used by the Application Pool |
+| `UserPassword`     | Password of the Windows account              |
+| `AppPoolName`      | IIS Application Pool name                    |
+| `LogFilePath`      | IIS log directory                            |
+| `AppName`          | IIS sub-application name                     |
+| `AppPhysicalPath`  | Physical path of the sub-application         |
 
 ---
 
@@ -120,21 +108,15 @@ The password is requested interactively and is not stored in the command or scri
 
 ## 7. Provisioning Process
 
-The script performs the following operations.
-
 ### 7.1 Local Windows Group
 
 The script checks whether the specified local group already exists.
 
-If the group does not exist, it is created:
-
-```powershell
-New-LocalGroup -Name $GroupName
-```
+If the group does not exist, it is created.
 
 The specified Windows account is then added to the group.
 
-This allows the environment to maintain a dedicated security group for the application.
+This provides a dedicated security group for the application.
 
 ---
 
@@ -142,16 +124,12 @@ This allows the environment to maintain a dedicated security group for the appli
 
 The script checks whether the specified Application Pool already exists.
 
-If necessary, it creates the Application Pool:
-
-```powershell
-New-WebAppPool -Name $AppPoolName
-```
+If necessary, it creates the Application Pool.
 
 The Application Pool is configured to run using the specified Windows account:
 
 ```text
-identityType = SpecificUser
+Identity Type: SpecificUser
 ```
 
 This allows the application to execute using a dedicated service account rather than the default IIS identity.
@@ -177,49 +155,15 @@ The HTTP binding is configured as:
 *:80:helloworld.local
 ```
 
----
-
-### 7.4 HTTPS Configuration
-
-The script also configures an HTTPS binding.
-
-The default HTTPS port is:
+The application can then be accessed through:
 
 ```text
-443
+http://helloworld.local
 ```
-
-If a certificate thumbprint is supplied through:
-
-```powershell
--CertificateThumbprint
-```
-
-the existing certificate is used.
-
-If no certificate thumbprint is provided, the script automatically generates a self-signed certificate:
-
-```powershell
-New-SelfSignedCertificate
-```
-
-The certificate is stored in:
-
-```text
-Cert:\LocalMachine\My
-```
-
-The resulting HTTPS binding uses:
-
-```text
-https://helloworld.local
-```
-
-> The self-signed certificate is intended for development/testing environments. A trusted certificate should be used for production environments.
 
 ---
 
-## 8. IIS Logging
+### 7.4 IIS Logging
 
 The script creates the configured log directory if necessary:
 
@@ -233,7 +177,7 @@ This makes the application's IIS logs easier to locate and manage.
 
 ---
 
-## 9. IIS Sub-Application
+### 7.5 IIS Sub-Application
 
 The script creates an IIS application below the main website.
 
@@ -266,7 +210,7 @@ as its Application Pool.
 
 ---
 
-## 10. Resulting IIS Structure
+## 8. Resulting IIS Structure
 
 After successful execution, the expected IIS structure is:
 
@@ -284,19 +228,15 @@ IIS
 
 The Application Pool runs using the configured Windows service account.
 
-The website has both HTTP and HTTPS bindings:
+The website is available through:
 
 ```text
-HTTP:
 http://helloworld.local
-
-HTTPS:
-https://helloworld.local
 ```
 
 ---
 
-## 11. Idempotent Provisioning
+## 9. Idempotent Provisioning
 
 The script checks whether several resources already exist before creating them.
 
@@ -305,9 +245,8 @@ For example:
 * Local group;
 * Application Pool;
 * IIS website;
-* HTTPS binding;
-* IIS application;
-* Log directory.
+* Log directory;
+* IIS application.
 
 This allows the script to be executed again without unnecessarily recreating existing IIS resources.
 
@@ -315,7 +254,7 @@ If a resource already exists, the script reports the condition and continues wit
 
 ---
 
-## 12. Expected Output
+## 10. Expected Output
 
 When the provisioning completes successfully, the script displays messages indicating the status of each operation.
 
@@ -325,11 +264,11 @@ The final message is:
 Provisionamento concluido.
 ```
 
-At this point, the IIS environment has been provisioned and is ready for application deployment/validation.
+At this point, the IIS environment has been provisioned and is ready for application deployment and validation.
 
 ---
 
-## 13. Security Considerations
+## 11. Security Considerations
 
 The script requires administrative privileges because it modifies:
 
@@ -337,7 +276,6 @@ The script requires administrative privileges because it modifies:
 * Windows group membership;
 * IIS configuration;
 * IIS Application Pools;
-* SSL certificates;
 * IIS bindings;
 * Application directories.
 
@@ -355,7 +293,7 @@ For production automation, credentials should be supplied through an appropriate
 
 ---
 
-## 14. Summary
+## 12. Summary
 
 This script automates the IIS provisioning process for the HelloWorld application.
 
@@ -373,14 +311,8 @@ PowerShell Script
        +-- IIS Application Pool
        |
        +-- IIS Website
-       |
-       +-- HTTP Binding
-       |
-       +-- HTTPS Binding
        |      |
-       |      +-- Existing Certificate
-       |      |       or
-       |      +-- Self-Signed Certificate
+       |      +-- HTTP Binding
        |
        +-- IIS Logging
        |
