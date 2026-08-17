@@ -66,7 +66,7 @@ iis.ps1
 Example local path:
 
 ```text
-C:\Users\Cicero\Documents\Cicero\Eurofins\iis.ps1
+C:\Users\Cicero\Documents\Cicero\iis.ps1
 ```
 
 The script accepts the configuration through command-line parameters, allowing the same script to be reused in different environments.
